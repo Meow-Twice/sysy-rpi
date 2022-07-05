@@ -71,8 +71,3 @@ def get_perf():
     with open(PERF_FILE, "r") as fp:
         body = fp.read()
     return body
-
-if __name__ == '__main__':
-    from gevent import pywsgi
-    pywsgi.WSGIServer(('0.0.0.0', 8000), application=app).serve_forever()
-    pass
