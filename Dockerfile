@@ -1,4 +1,6 @@
 FROM python:3.8-alpine
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+RUN apk update && apk add --no-cache gcc
 RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple flask uwsgi
 COPY app.py index.html /
 WORKDIR /
