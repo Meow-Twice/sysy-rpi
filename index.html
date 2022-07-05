@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meow!</title>
+</head>
+<body>
+  <h1>Hello, {hostname}</h1>
+  <p>API Usage:</p>
+  <ol>
+    <li><p><code>POST /elf</code> : upload executable elf file</p>
+    </li>
+    <li><p><code>POST /input</code> : upload input file or give stdin via post body (and then execute elf)</p>
+    </li>
+    <li><p><code>GET /output</code> : get output of last run</p>
+    </li>
+    <li><p><code>GET /perf</code> : get perf(stderr) of last run</p>
+    </li>
+  </ol>
+</body>
+</html>
