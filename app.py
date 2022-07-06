@@ -35,7 +35,7 @@ def upload_asm():
     else:
         file = request.files['file']
         file.save(ASM_FILE)
-    p = subprocess.run(["/bin/bash", "/usr/bin/sysy-asm.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    p = subprocess.run(["/bin/bash", "/usr/bin/sysy-elf.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     resp = p.stderr.decode('utf-8')
     if resp != "" and not resp.endswith('\n'):
         resp += "\n"
