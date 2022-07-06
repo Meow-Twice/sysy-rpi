@@ -1,11 +1,11 @@
 [Unit]
-Description=remote-run
+Description=rpi-remote-run
 After=network.target
 
 [Service]
 User=pi
-WorkingDirectory=/opt/remote-run/
-Environment=VIRTUAL_ENV=/opt/remote-run/.venv/
+WorkingDirectory=/opt/rpi-remote-run/
+Environment=VIRTUAL_ENV=/opt/rpi-remote-run/.venv/
 Environment=PATH=$VIRTUAL_ENV/bin:$PATH
 ExecStart=/opt/remote-run/.venv/bin/uwsgi --master -p 4 --http 0.0.0.0:9000 -w app:app
 ExecStop=/bin/kill -2 $MAINPID
