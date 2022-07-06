@@ -12,6 +12,8 @@ DATA_PATH = "data"
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH, mode=0o755)
 
+TIMEOUT_SECS = 120
+
 ASM_FILE    = os.path.join(DATA_PATH, "test.S")
 ELF_FILE    = os.path.join(DATA_PATH, "test.elf")
 INPUT_FILE  = os.path.join(DATA_PATH, "input.txt")
@@ -35,7 +37,10 @@ def upload_asm():
     else:
         file = request.files['file']
         file.save(ASM_FILE)
-    p = subprocess.run(["/bin/bash", "/usr/bin/sysy-elf.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    try:
+        p = subprocess.run(["/bin/bash", "/usr/bin/sysy-elf.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=TIMEOUT_SECS)
+    except subprocess.TimeoutExpired:
+        return "gcc timeout!", client.INTERNAL_SERVER_ERROR
     resp = p.stderr.decode('utf-8')
     if resp != "" and not resp.endswith('\n'):
         resp += "\n"
@@ -63,7 +68,10 @@ def upload_input():
         file = request.files['file']
         file.save(INPUT_FILE)
     start_time = time.time()
-    p = subprocess.run([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"))
+    try:
+        p = subprocess.run([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=60)
+    except subprocess.TimeoutExpired:
+        return "elf run timeout!", client.INTERNAL_SERVER_ERROR
     end_time = time.time()
     # 向 stdout.txt 后追加返回值
     with open(OUTPUT_FILE, "r") as fp:
