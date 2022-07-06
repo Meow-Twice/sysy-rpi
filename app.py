@@ -12,10 +12,11 @@ DATA_PATH = "data"
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH, mode=0o755)
 
-ELF_FILE = os.path.join(DATA_PATH, "run.elf")
-INPUT_FILE = os.path.join(DATA_PATH, "input.txt")
+ASM_FILE    = os.path.join(DATA_PATH, "test.S")
+ELF_FILE    = os.path.join(DATA_PATH, "test.elf")
+INPUT_FILE  = os.path.join(DATA_PATH, "input.txt")
 OUTPUT_FILE = os.path.join(DATA_PATH, "output.txt")
-PERF_FILE = os.path.join(DATA_PATH, "perf.txt")
+PERF_FILE   = os.path.join(DATA_PATH, "perf.txt")
 
 # 显示欢迎页
 @app.route("/")
@@ -23,6 +24,23 @@ def hello():
     with open("index.html", "r") as fp:
         h = fp.read()
     return h.format(hostname=socket.gethostname())
+
+# 上传汇编文件 在派上自动编译为 ELF
+@app.route("/asm", methods=['POST'])
+def upload_asm():
+    if 'file' not in request.files:
+        # use body as content
+        with open(ASM_FILE, "w") as fp:
+            fp.write(request.data.decode('utf-8'))
+    else:
+        file = request.files['file']
+        file.save(ASM_FILE)
+    p = subprocess.run(["/bin/bash", "/usr/bin/sysy-asm.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    resp = p.stderr.decode('utf-8')
+    if resp != "" and not resp.endswith('\n'):
+        resp += "\n"
+    resp += "gcc exited with code {0}".format(p.returncode)
+    return resp, client.OK
 
 # 上传 ELF 文件
 @app.route("/elf", methods=['POST'])
