@@ -30,13 +30,16 @@ def hello():
 # 上传汇编文件 在派上自动编译为 ELF
 @app.route("/asm", methods=['POST'])
 def upload_asm():
-    if 'file' not in request.files:
-        # use body as content
-        with open(ASM_FILE, "w") as fp:
-            fp.write(request.data.decode('utf-8'))
-    else:
-        file = request.files['file']
-        file.save(ASM_FILE)
+    try:
+        if 'file' not in request.files:
+            # use body as content
+            with open(ASM_FILE, "w") as fp:
+                fp.write(request.data.decode('utf-8'))
+        else:
+            file = request.files['file']
+            file.save(ASM_FILE)
+    except Exception as e:
+        return str(e), client.INTERNAL_SERVER_ERROR
     try:
         p = subprocess.run(["/bin/bash", "/usr/bin/sysy-elf.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=TIMEOUT_SECS)
     except subprocess.TimeoutExpired:
@@ -53,20 +56,26 @@ def upload_elf():
     if 'file' not in request.files:
         return "file not exist", client.BAD_REQUEST
     file = request.files['file']
-    file.save(ELF_FILE)
-    os.chmod(ELF_FILE, os.stat(ELF_FILE).st_mode | stat.S_IEXEC)
+    try:
+        file.save(ELF_FILE)
+        os.chmod(ELF_FILE, os.stat(ELF_FILE).st_mode | stat.S_IEXEC)
+    except Exception as e:
+        return str(e), client.INTERNAL_SERVER_ERROR
     return "ok, elf received {0} bytes".format(os.path.getsize(ELF_FILE)), client.OK
 
 # 上传 in 文件
 @app.route("/input", methods=['POST'])
 def upload_input():
-    if 'file' not in request.files:
-        # use body as content
-        with open(INPUT_FILE, "w") as fp:
-            fp.write(request.data.decode('utf-8'))
-    else:
-        file = request.files['file']
-        file.save(INPUT_FILE)
+    try:
+        if 'file' not in request.files:
+            # use body as content
+            with open(INPUT_FILE, "w") as fp:
+                fp.write(request.data.decode('utf-8'))
+        else:
+            file = request.files['file']
+            file.save(INPUT_FILE)
+    except Exception as e:
+        return str(e), client.INTERNAL_SERVER_ERROR
     start_time = time.time()
     try:
         p = subprocess.run([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=60)
