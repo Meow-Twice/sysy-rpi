@@ -76,7 +76,7 @@ def upload_input():
     # 向 stdout.txt 后追加返回值
     with open(OUTPUT_FILE, "r") as fp:
         stdout = fp.read()
-    append_nl = len(stdout) == 0 or stdout[-1] != '\n'
+    append_nl = len(stdout) != 0 and stdout[-1] != '\n'
     with open(OUTPUT_FILE, "a") as fp:
         if append_nl:
             fp.write('\n')
