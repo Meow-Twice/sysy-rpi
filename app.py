@@ -45,7 +45,7 @@ def upload_asm():
     if resp != "" and not resp.endswith('\n'):
         resp += "\n"
     resp += "gcc exited with code {0}".format(p.returncode)
-    return resp, client.OK
+    return resp, client.OK if p.returncode == 0 else client.INTERNAL_SERVER_ERROR
 
 # 上传 ELF 文件
 @app.route("/elf", methods=['POST'])
