@@ -28,7 +28,7 @@ python3 -m virtualenv .venv
 source .venv/bin/activate
 pip install flask uwsgi -i https://pypi.tuna.tsinghua.edu.cn/simple
 # setup system service
-ln -s sysy-rpi.service /etc/systemd/system/sysy-rpi.service
+ln -s /opt/sysy-rpi/sysy-rpi.service /etc/systemd/system/sysy-rpi.service
 systemctl daemon-reload
 # create data directory and let non-root user access it
 mkdir data
