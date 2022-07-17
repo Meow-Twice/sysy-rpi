@@ -20,9 +20,9 @@ Run following commands with *root shell*: (you can use `sudo -i` to enter root s
 ```shell
 # copy files
 cp scripts/sysy-elf.sh /usr/bin/
-mkdir /opt/sysy-elf/
-cp -t /opt/sysy-elf/ app.py index.html sysy-rpi.service
-cd /opt/sysy-elf/
+mkdir /opt/sysy-rpi/
+cp -t /opt/sysy-rpi/ app.py index.html sysy-rpi.service
+cd /opt/sysy-rpi/
 # setup python virtual environment
 python3 -m virtualenv .venv
 source .venv/bin/activate
