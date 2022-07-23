@@ -6,7 +6,7 @@ import os
 import subprocess
 import time
 
-app = Flask("rpi-run")
+app = Flask("sysy-rpi")
 
 DATA_PATH = "data"
 if not os.path.exists(DATA_PATH):
@@ -78,7 +78,7 @@ def upload_input():
         return str(e), client.INTERNAL_SERVER_ERROR
     start_time = time.time()
     try:
-        p = subprocess.run([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=60)
+        p = subprocess.run([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=TIMEOUT_SECS)
     except subprocess.TimeoutExpired:
         return "elf run timeout!", client.INTERNAL_SERVER_ERROR
     end_time = time.time()
