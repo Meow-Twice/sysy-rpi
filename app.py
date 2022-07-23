@@ -20,6 +20,16 @@ INPUT_FILE  = os.path.join(DATA_PATH, "input.txt")
 OUTPUT_FILE = os.path.join(DATA_PATH, "output.txt")
 PERF_FILE   = os.path.join(DATA_PATH, "perf.txt")
 
+def start_process_with_timeout(cmd: list, **kwargs):
+    # kwargs must contains: stdin, stdout, stderr
+    p = subprocess.Popen(cmd, stdin=kwargs['stdin'], stdout=kwargs['stdout'], stderr=kwargs['stderr'])
+    try:
+        p.wait(timeout=kwargs['timeout'])
+        return p.returncode, p.stdout, p.stderr
+    except subprocess.TimeoutExpired as e:
+        p.kill()
+        raise e
+
 # 显示欢迎页
 @app.route("/")
 def hello():
@@ -41,14 +51,14 @@ def upload_asm():
     except Exception as e:
         return str(e), client.INTERNAL_SERVER_ERROR
     try:
-        p = subprocess.run(["/bin/bash", "/usr/bin/sysy-elf.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=TIMEOUT_SECS)
+        ret, _, stderr = start_process_with_timeout(["/bin/bash", "/usr/bin/sysy-elf.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=TIMEOUT_SECS)
     except subprocess.TimeoutExpired:
         return "gcc timeout!", client.INTERNAL_SERVER_ERROR
-    resp = p.stderr.decode('utf-8')
+    resp = stderr.decode('utf-8')
     if resp != "" and not resp.endswith('\n'):
         resp += "\n"
-    resp += "gcc exited with code {0}".format(p.returncode)
-    return resp, client.OK if p.returncode == 0 else client.INTERNAL_SERVER_ERROR
+    resp += "gcc exited with code {0}".format(ret)
+    return resp, client.OK if ret == 0 else client.INTERNAL_SERVER_ERROR
 
 # 上传 ELF 文件
 @app.route("/elf", methods=['POST'])
@@ -78,7 +88,7 @@ def upload_input():
         return str(e), client.INTERNAL_SERVER_ERROR
     start_time = time.time()
     try:
-        p = subprocess.run([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=TIMEOUT_SECS)
+        ret, _, _ = start_process_with_timeout([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=TIMEOUT_SECS)
     except subprocess.TimeoutExpired:
         return "elf run timeout!", client.INTERNAL_SERVER_ERROR
     end_time = time.time()
@@ -89,7 +99,7 @@ def upload_input():
     with open(OUTPUT_FILE, "a") as fp:
         if append_nl:
             fp.write('\n')
-        fp.write(str(p.returncode))
+        fp.write(str(ret))
     elapsed_time = (end_time - start_time)
     return "ok, elapsed {0:.2f} secs".format(elapsed_time), client.OK
 
