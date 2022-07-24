@@ -54,7 +54,7 @@ def hello():
 # Upload assembly file, then link it to ELF with gcc
 @app.route("/asm", methods=['POST'])
 def upload_asm():
-    file_size = request.headers['Content-Length']
+    file_size = request.headers['Content-Length'] if request.headers.has_key('Content-Length') else 0
     start_time = time.time()
     try:
         with open(ASM_FILE, "wb") as fp:
@@ -75,7 +75,7 @@ def upload_asm():
 # Upload ELF file, attention the size of payload may be huge (>100MB, even >1GB)
 @app.route("/elf", methods=['POST'])
 def upload_elf():
-    file_size = request.headers['Content-Length']
+    file_size = request.headers['Content-Length'] if request.headers.has_key('Content-Length') else 0
     start_time = time.time()
     try:
         with open(ELF_FILE, "wb") as fp:
@@ -92,7 +92,7 @@ def upload_elf():
 # Send standard input file, then execute the ELF file uploaded previously.
 @app.route("/input", methods=['POST'])
 def upload_input():
-    file_size = request.headers['Content-Length']
+    file_size = request.headers['Content-Length'] if request.headers.has_key('Content-Length') else 0
     start_time = time.time()
     try:
         with open(INPUT_FILE, "wb") as fp:
