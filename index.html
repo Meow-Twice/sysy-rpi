@@ -9,11 +9,12 @@
   <h1>Hello, {hostname}</h1>
   <p>API Usage:</p>
   <ol>
-    <li><p><code>POST /asm</code> : upload assembly code, via raw post body or form-data file (key="file")</p></li>
-    <li><p><code>POST /elf</code> : upload executable elf file via form-data file (key="file")</p></li>
-    <li><p><code>POST /input</code> : give stdin via raw post body or form-data file (key="file"), and then execute elf</p></li>
-    <li><p><code>GET /output</code> : get output of last run</p></li>
+    <li><p><code>POST /asm</code> : upload assembly code</p></li>
+    <li><p><code>POST /elf</code> : upload executable elf file</p></li>
+    <li><p><code>POST /input</code> : send stdin, and then execute elf</p></li>
+    <li><p><code>GET /output</code> : get output(stdout + return code) of last run</p></li>
     <li><p><code>GET /perf</code> : get perf(stderr) of last run</p></li>
   </ol>
+  <p>The format of POST body should be raw text or binary, do not use form-data.</p>
 </body>
 </html>

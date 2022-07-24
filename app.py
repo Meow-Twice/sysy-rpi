@@ -5,8 +5,11 @@ import socket
 import os
 import subprocess
 import time
+from io import FileIO
+from typing import IO
 
 app = Flask("sysy-rpi")
+app.config['CHUNK_SIZE'] = 8192
 
 DATA_PATH = "data"
 if not os.path.exists(DATA_PATH):
@@ -30,69 +33,78 @@ def start_process_with_timeout(cmd: list, **kwargs):
         p.kill()
         raise e
 
-# 显示欢迎页
+def receive_post_body(stream: IO[bytes], file_size: int, file_fp: FileIO) -> float:
+    chunk_size = app.config['CHUNK_SIZE']
+    recv_size = 0
+    while True:
+        chunk = stream.read(chunk_size)
+        if len(chunk) == 0:
+            break
+        file_fp.write(chunk)
+        recv_size += len(chunk)
+        print('received {0}/{1} ...'.format(recv_size, file_size), flush=True)
+
+# Welcome and usage page.
 @app.route("/")
 def hello():
     with open("index.html", "r") as fp:
         h = fp.read()
     return h.format(hostname=socket.gethostname())
 
-# 上传汇编文件 在派上自动编译为 ELF
+# Upload assembly file, then link it to ELF with gcc
 @app.route("/asm", methods=['POST'])
 def upload_asm():
+    file_size = request.headers['Content-Length']
+    start_time = time.time()
     try:
-        if 'file' not in request.files:
-            # use body as content
-            with open(ASM_FILE, "w") as fp:
-                fp.write(request.data.decode('utf-8'))
-        else:
-            file = request.files['file']
-            file.save(ASM_FILE)
-    except Exception as e:
+        with open(ASM_FILE, "wb") as fp:
+            receive_post_body(request.stream, file_size, fp)
+    except OSError as e:
         return str(e), client.INTERNAL_SERVER_ERROR
     try:
         ret, _, stderr = start_process_with_timeout(["/bin/bash", "/usr/bin/sysy-elf.sh", ASM_FILE], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=TIMEOUT_SECS)
     except subprocess.TimeoutExpired:
         return "gcc timeout!", client.INTERNAL_SERVER_ERROR
-    resp = stderr.decode('utf-8')
+    resp = stderr.read().decode('utf-8')
     if resp != "" and not resp.endswith('\n'):
         resp += "\n"
-    resp += "gcc exited with code {0}".format(ret)
+    end_time = time.time()
+    resp += "ok, gcc exited with code {0}, elapsed {1:.2f} secs".format(ret, (end_time - start_time))
     return resp, client.OK if ret == 0 else client.INTERNAL_SERVER_ERROR
 
-# 上传 ELF 文件
+# Upload ELF file, attention the size of payload may be huge (>100MB, even >1GB)
 @app.route("/elf", methods=['POST'])
 def upload_elf():
-    if 'file' not in request.files:
-        return "file not exist", client.BAD_REQUEST
-    file = request.files['file']
+    file_size = request.headers['Content-Length']
+    start_time = time.time()
     try:
-        file.save(ELF_FILE)
+        with open(ELF_FILE, "wb") as fp:
+            receive_post_body(request.stream, file_size, fp)
+    except OSError as e:
+        return str(e), client.INTERNAL_SERVER_ERROR
+    try:
         os.chmod(ELF_FILE, os.stat(ELF_FILE).st_mode | stat.S_IEXEC)
     except Exception as e:
         return str(e), client.INTERNAL_SERVER_ERROR
-    return "ok, elf received {0} bytes".format(os.path.getsize(ELF_FILE)), client.OK
+    end_time = time.time()
+    return "ok, elf received {0} bytes, elapsed {1:.2f} secs".format(os.path.getsize(ELF_FILE), (end_time - start_time)), client.OK
 
-# 上传 in 文件
+# Send standard input file, then execute the ELF file uploaded previously.
 @app.route("/input", methods=['POST'])
 def upload_input():
-    try:
-        if 'file' not in request.files:
-            # use body as content
-            with open(INPUT_FILE, "w") as fp:
-                fp.write(request.data.decode('utf-8'))
-        else:
-            file = request.files['file']
-            file.save(INPUT_FILE)
-    except Exception as e:
-        return str(e), client.INTERNAL_SERVER_ERROR
+    file_size = request.headers['Content-Length']
     start_time = time.time()
+    try:
+        with open(INPUT_FILE, "wb") as fp:
+            receive_post_body(request.stream, file_size, fp)
+    except OSError as e:
+        return str(e), client.INTERNAL_SERVER_ERROR
     try:
         ret, _, _ = start_process_with_timeout([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=TIMEOUT_SECS)
     except subprocess.TimeoutExpired:
         return "elf run timeout!", client.INTERNAL_SERVER_ERROR
     end_time = time.time()
-    # 向 stdout.txt 后追加返回值
+    # append return code to output file with a new line.
     with open(OUTPUT_FILE, "r") as fp:
         stdout = fp.read()
     append_nl = len(stdout) != 0 and stdout[-1] != '\n'
@@ -103,14 +115,14 @@ def upload_input():
     elapsed_time = (end_time - start_time)
     return "ok, elapsed {0:.2f} secs".format(elapsed_time), client.OK
 
-# 下载 out 文件
+# get output (stdout + return code)
 @app.route("/output", methods=['GET'])
 def get_output():
     with open(OUTPUT_FILE, "r") as fp:
         body = fp.read()
     return body
 
-# 下载 perf 文件
+# get perf (stderr)
 @app.route("/perf", methods=['GET'])
 def get_perf():
     with open(PERF_FILE, "r") as fp:
