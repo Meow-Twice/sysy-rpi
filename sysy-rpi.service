@@ -6,7 +6,7 @@ After=network.target
 User=pi
 WorkingDirectory=/opt/sysy-rpi/
 Environment=VIRTUAL_ENV=/opt/sysy-rpi/.venv/
-ExecStart=/opt/sysy-rpi/.venv/bin/uwsgi --master -p 4 --http 0.0.0.0:9000 -w app:app
+ExecStart=/opt/sysy-rpi/.venv/bin/uwsgi --http-timeout 65536 --harakiri 65536 --master -p 4 --http 0.0.0.0:9000 -w app:app
 ExecStop=/bin/kill -2 $MAINPID
 
 [Install]
