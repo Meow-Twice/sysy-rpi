@@ -103,6 +103,8 @@ def upload_input():
         ret, _, _ = start_process_with_timeout([ELF_FILE], stdin=open(INPUT_FILE, "r"), stdout=open(OUTPUT_FILE, "w"), stderr=open(PERF_FILE, "w"), timeout=TIMEOUT_SECS)
     except subprocess.TimeoutExpired:
         return "elf run timeout!", client.INTERNAL_SERVER_ERROR
+    except Exception as e:
+        return "elf run error!\n{0}".format(e), client.INTERNAL_SERVER_ERROR
     end_time = time.time()
     # append return code to output file with a new line.
     with open(OUTPUT_FILE, "r") as fp:
