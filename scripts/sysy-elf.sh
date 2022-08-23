@@ -26,6 +26,6 @@ fi
 GCCPREFIX=
 # GCCPREFIX=arm-linux-gnueabihf-
 
-MACHINE_FLAGS="-march=armv7 -mfpu=neon -mfloat-abi=hard"
+MACHINE_FLAGS="-march=armv7-a"
 
 ${GCCPREFIX}gcc ${MACHINE_FLAGS} --static -o $NAME.elf $SOURCE /usr/share/sylib/${GCCPREFIX}sylib.a

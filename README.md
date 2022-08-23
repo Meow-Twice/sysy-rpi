@@ -1,8 +1,6 @@
-# SysY RPi
+# SysY 树莓派服务程序
 
-通过 POST API 上传 elf 文件和 in 文件，在树莓派上执行 elf 并通过 GET API 取回 stdout 和 stderr 结果。
-
-API 说明详见 `index.html` 。
+与 [评测机](https://github.com/Meow-Twice/sysy-test) 对接的树莓派服务程序。 API 说明详见 `index.html` 。
 
 ## Requirements
 
@@ -11,7 +9,6 @@ API 说明详见 `index.html` 。
 - SysY library at `/usr/share/sylib/`
   - `sylib.c` and `sylib.h`
   - static library binary `sylib.a`
-  - static library from cross compiler (if needed), e.g. `arm-linux-gnueabihf-sylib.a`
 
 ## Installation
 
